@@ -53,6 +53,19 @@ fn main() {
             }
         }
 
+        match receiver.try_recv() {
+            Ok(msg) => {
+                clients = clients
+                    .into_iter()
+                    .filter_map(|mut client| {
+                        let mut message_buff = msg.clone().into_bytes();
+                        message_buff.resize(MESSAGE_SIZE, 0);
+                        client.write_all(&message_buff).map(|_| client).ok()
+                    })
+                    .collect::<Vec<_>>();
+            }
+            Err(_) => (),
+        }
 
         thread::sleep(Duration::from_millis(100));
     }
