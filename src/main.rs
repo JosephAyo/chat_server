@@ -47,6 +47,7 @@ fn main() {
                     }
                 });
             }
+            Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
             Err(e) => {
                 println!("couldn't get client: {e:?}");
                 break;
