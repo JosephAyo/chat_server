@@ -1,7 +1,7 @@
 use std::{
     io::{ErrorKind, Read, Write},
     net::TcpListener,
-    sync::mpsc::channel,
+    sync::mpsc::{channel, TryRecvError},
     thread,
     time::Duration,
 };
@@ -55,15 +55,19 @@ fn main() {
         }
 
         match receiver.try_recv() {
-            Ok(msg) => {
+            Ok(message) => {
                 clients = clients
                     .into_iter()
                     .filter_map(|mut client| {
-                        let mut message_buff = msg.clone().into_bytes();
+                        let mut message_buff = message.clone().into_bytes();
                         message_buff.resize(MESSAGE_SIZE, 0);
                         client.write_all(&message_buff).map(|_| client).ok()
                     })
                     .collect::<Vec<_>>();
+            }
+            Err(TryRecvError::Disconnected) => {
+                println!("channel disconnected");
+                break;
             }
             Err(_) => (),
         }
